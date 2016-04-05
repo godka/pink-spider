@@ -163,7 +163,6 @@ namespace pinkspider
             superlist.Add(html);
             for (; ; )
             {
-                Console.WriteLine(superlist.Count);
                 if (superlist.Count == 0)
                     break;
                 var s = superlist[0];
