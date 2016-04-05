@@ -16,8 +16,11 @@ namespace pinkspider
 		{
 
 			try
-			{ 
-				StreamReader sr = GetRequestCount ("http://index.iqiyi.com/q/?name=" + tagName);
+			{
+                StreamReader sr = GetRequestCount("http://index.iqiyi.com/q/?name=" + tagName);
+                if (sr == null)
+                    return string.Empty;
+
 				string ret = string.Empty;
 				for(;;){
 					string t = sr.ReadLine();
@@ -47,6 +50,9 @@ namespace pinkspider
 		private string GetTitleCore(string html)
 		{
 			StreamReader sr = GetRequestCount (html);
+
+            if (sr == null)
+                return string.Empty;
 
 			const string pattern = @"(?<=title\>).*(?=</title)";
 			Regex r = new Regex (pattern, RegexOptions.IgnoreCase); //新建正则模式
@@ -98,7 +104,8 @@ namespace pinkspider
 		private string[] GetLinksCore(string html)
 		{
 			StreamReader sr = GetRequestCount (html);
-					
+            if (sr == null)
+                return null;
 			const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?";
 			Regex r = new Regex (pattern, RegexOptions.IgnoreCase); //新建正则模式
 			MatchCollection m = r.Matches (sr.ReadToEnd()); //获得匹配结果
@@ -107,10 +114,15 @@ namespace pinkspider
 			for (int i = 0; i < m.Count; i++) {
 				string s = m [i].ToString ();
 				if(s.Contains(".html")){	//perhaps add ?list
-					if (!BrowserLists.Contains (s)) {
-						BrowserLists.Add (s);
-						links.Add(s); //提取出结果
-					}
+                    if (!s.Contains("list.iqiyi"))
+                    {
+
+                        if (!BrowserLists.Contains(s))
+                        {
+                            BrowserLists.Add(s);
+                            links.Add(s); //提取出结果
+                        }
+                    }
 				}
 			}
 			if (BrowserLists.Count > 100) {
@@ -151,10 +163,11 @@ namespace pinkspider
 		public string[] GetLink(string[] links){
 			foreach (string s in links) {
 				var strs = GetLinksCore (s);
-				if (strs.Length > 0)
-					return GetLink (strs);
-				else
-					return null;
+                if (strs != null)
+                {
+                    if (strs.Length > 0)
+                        return GetLink(strs);
+                }
 			}
 			return null;
 		}
