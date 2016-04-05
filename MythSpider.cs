@@ -101,7 +101,8 @@ namespace pinkspider
 			}
 			return sr;
 		}
-		private string[] GetLinksCore(string html)
+
+		private List<string> GetLinksCore(string html)
 		{
 			StreamReader sr = GetRequestCount (html);
             if (sr == null)
@@ -116,7 +117,6 @@ namespace pinkspider
 				if(s.Contains(".html")){	//perhaps add ?list
                     if (!s.Contains("list.iqiyi"))
                     {
-
                         if (!BrowserLists.Contains(s))
                         {
                             BrowserLists.Add(s);
@@ -125,55 +125,51 @@ namespace pinkspider
                     }
 				}
 			}
-			if (BrowserLists.Count > 100) {
-				Console.WriteLine ("Browser List is Full,start Get Statics");
-				//start Get
-				for (;;) {
-					if (BrowserLists.Count == 0)
-						break;
-					string url = BrowserLists [0];
-					string title = GetTitleCore (url);
-					if (!title.Equals (string.Empty)) {
-						var realtitles = title.Split ('-');
-						if (realtitles.Length > 0) {
-							string realtitle = realtitles [0];
-							if (!NameLists.Contains (realtitle)) {
-								//Console.WriteLine (realtitle);
-								NameLists.Add (realtitle);
-								string ret = GetStatics (realtitle);
-								if (!ret.Equals (string.Empty)) {
-									Console.WriteLine ("hit:" + realtitle);
-									FileStream fs = new FileStream ("out.txt", FileMode.Append);
-									StreamWriter sw = new StreamWriter (fs);
-									sw.WriteLine (ret);
-									sw.Close ();
-									fs.Close ();
-								}
-							}
-						}
-							
-					}
-					//Console.WriteLine (title);
-					BrowserLists.RemoveAt (0);
-				}
-			}
 			sr.Close ();
-			return links.ToArray();
+			return links;
 		}
-		public string[] GetLink(string[] links){
-			foreach (string s in links) {
-				var strs = GetLinksCore (s);
-                if (strs != null)
+
+        private void WriteStatics(string url)
+        {
+            string title = GetTitleCore(url);
+            if (!title.Equals(string.Empty))
+            {
+                var realtitles = title.Split('-');
+                if (realtitles.Length > 0)
                 {
-                    if (strs.Length > 0)
-                        return GetLink(strs);
+                    string realtitle = realtitles[0];
+                    if (!NameLists.Contains(realtitle))
+                    {
+                        //Console.WriteLine (realtitle);
+                        NameLists.Add(realtitle);
+                        string ret = GetStatics(realtitle);
+                        if (!ret.Equals(string.Empty))
+                        {
+                            Console.WriteLine("hit:" + realtitle);
+                            FileStream fs = new FileStream("out.txt", FileMode.Append);
+                            StreamWriter sw = new StreamWriter(fs);
+                            sw.WriteLine(ret);
+                            sw.Close();
+                            fs.Close();
+                        }
+                    }
                 }
-			}
-			return null;
-		}
+
+            }
+        }
 		public void StartLoop(string html){
-			string[] tmp = { html };
-			GetLink (tmp);
+			//string[] tmp = { html };
+            List<string> superlist = new List<string>();
+            superlist.Add(html);
+            for (; ; )
+            {
+                if (superlist.Count == 0)
+                    break;
+                var s = superlist[0];
+                superlist.AddRange(GetLinksCore(s));
+                WriteStatics(s);
+                superlist.RemoveAt(0);
+            }
 		}
 		public MythSpider ()
 		{
