@@ -47,36 +47,21 @@ namespace pinkspider
 			}
 		}
 
-		private string GetTitleCore(string html)
-		{
-			StreamReader sr = GetRequestCount (html);
+        private string GetTitleCore(string src)
+        {
+            string ret = string.Empty;
 
-            if (sr == null)
-                return string.Empty;
-
-			const string pattern = @"(?<=title\>).*(?=</title)";
-			Regex r = new Regex (pattern, RegexOptions.IgnoreCase); //新建正则模式
-			string ret = string.Empty;
-			for (;;) {
-				string t = sr.ReadLine ();
-				if (t == null) {
-					break;
-				} else {
-					MatchCollection m = r.Matches (t); //获得匹配结果
-					if (m.Count > 0) {
-						ret = m [0].ToString ();
-						ret = ret.Replace ("<title>", "");
-						ret = ret.Replace ("</title>", "");
-						break;
-					}
-
-				}
-			}
-			//request.Abort ();
-			//response.Close ();
-			sr.Close ();
-			return ret;
-		}
+            const string pattern = @"(?<=title\>).*(?=</title)";
+            Regex r = new Regex(pattern, RegexOptions.IgnoreCase); //新建正则模式
+            MatchCollection m = r.Matches(src); //获得匹配结果
+            if (m.Count > 0)
+            {
+                ret = m[0].ToString();
+                ret = ret.Replace("<title>", "");
+                ret = ret.Replace("</title>", "");
+            }
+            return ret;
+        }
 		private StreamReader GetRequestCount(string html,int times = 10){
 			StreamReader sr = null;
 			for (int i = 0; i < times; i++) {
@@ -103,14 +88,17 @@ namespace pinkspider
 		}
 
 		private List<string> GetLinksCore(string html)
-		{
+        {
+            List<string> links = new List<string>(); 
 			StreamReader sr = GetRequestCount (html);
             if (sr == null)
-                return null;
-			const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?";
+                return links;
+
+            const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?";
+            string str = sr.ReadToEnd();
+            WriteStatics(str);
 			Regex r = new Regex (pattern, RegexOptions.IgnoreCase); //新建正则模式
-			MatchCollection m = r.Matches (sr.ReadToEnd()); //获得匹配结果
-			List<string> links = new List<string>(); 
+			MatchCollection m = r.Matches (str); //获得匹配结果
 
 			for (int i = 0; i < m.Count; i++) {
 				string s = m [i].ToString ();
@@ -129,9 +117,9 @@ namespace pinkspider
 			return links;
 		}
 
-        private void WriteStatics(string url)
+        private void WriteStatics(string src)
         {
-            string title = GetTitleCore(url);
+            string title = GetTitleCore(src);
             if (!title.Equals(string.Empty))
             {
                 var realtitles = title.Split('-');
