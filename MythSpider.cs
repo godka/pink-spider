@@ -138,9 +138,11 @@ namespace pinkspider
                 if (realtitles.Length > 0)
                 {
                     string realtitle = realtitles[0];
+                    var sptitle = Regex.Split(realtitle, "&nbsp");
+                    if (sptitle.Length > 0)
+                        realtitle = sptitle[0];
                     if (!NameLists.Contains(realtitle))
                     {
-                        //Console.WriteLine (realtitle);
                         NameLists.Add(realtitle);
                         string ret = GetStatics(realtitle);
                         if (!ret.Equals(string.Empty))
