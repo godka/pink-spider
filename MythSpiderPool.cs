@@ -26,7 +26,7 @@ namespace pinkspider
                     tmpstr.Add(mstrs[i]);
                 }
             }
-            mspider[index].StartLoop(tmpstr.ToArray());
+            mspider[index].StartLoop(tmpstr.ToArray(),index);
         }
         private void timer_Callback(object sender)
         {
@@ -157,7 +157,7 @@ namespace pinkspider
         {
             if (mthreadnum == 1)
             {
-                mspider[0].StartLoop(mstrs);
+                mspider[0].StartLoop(mstrs,0);
             }
             else
             {

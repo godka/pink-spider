@@ -11,7 +11,7 @@ namespace pinkspider
         private HttpWebRequest request;
         private HashSet<string> NameLists;
         private List<string> superlist;
-
+        private int mindex;
         public string GetStatics(string tagName)
         {
 
@@ -112,7 +112,7 @@ namespace pinkspider
                 StreamReader sr = GetRequestCount(html);
                 if (sr == null)
                 {
-                    Console.WriteLine("ReadFailed:" + html);
+                    Console.WriteLine("thread {0}:ReadFailed,{1}" ,mindex,html);
                     return links;
                 }
 
@@ -148,7 +148,7 @@ namespace pinkspider
             }
             catch (Exception ee)
             {
-                Console.WriteLine(ee.Message);
+                Console.WriteLine("thread {0}:{1}", mindex, ee.Message);
             }
             return links;
         }
@@ -182,7 +182,7 @@ namespace pinkspider
                         string ret = GetStatics(realtitle);
                         if (!ret.Equals(string.Empty))
                         {
-                            Console.WriteLine("hit:" + realtitle);
+                            Console.WriteLine("thread {0}:hit,{1}",mindex,realtitle);
                             FileStream fs = new FileStream("out.txt", FileMode.Append);
                             StreamWriter sw = new StreamWriter(fs);
                             sw.WriteLine(ret);
@@ -197,10 +197,11 @@ namespace pinkspider
         public void StartLoop(string html)
         {
             string[] tmp = { html };
-            StartLoop(tmp);
+            StartLoop(tmp,0);
         }
-        public void StartLoop(string[] history)
+        public void StartLoop(string[] history,int index)
         {
+            mindex = index;
             superlist = new List<string>(history);
             //int t = superlist.Count;
             for (; ; )
