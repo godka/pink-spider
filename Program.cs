@@ -5,16 +5,17 @@ namespace pinkspider
 	{
         public static void Main(string[] args)
         {
-            MythSpider spider = new MythSpider();
+            MythSpiderPool spider;// = new MythSpiderPool();
             if (args.Length > 0)
             {
                 var strs = System.IO.File.ReadAllLines(args[0], System.Text.Encoding.UTF8);
-                spider.StartLoop(strs);
+                spider = new MythSpiderPool(strs, 8);
             }
             else
             {
-                spider.StartLoop("http://www.iqiyi.com");
+                spider = new MythSpiderPool("http://www.iqiyi.com", 8);
             }
+            spider.StartLoop();
             //Console.ReadKey ();
         }
 
