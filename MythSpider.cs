@@ -142,7 +142,7 @@ namespace pinkspider
         }
         private void SaveBackground(List<string> list)
         {
-            Console.WriteLine("Saving Background,{0},elements", BrowserLists.Count);
+            Console.WriteLine("Saving Background,{0},elements", list.Count);
             var t = DateTime.Now;
             StreamWriter sw = new StreamWriter("history.log",false,Encoding.UTF8);
             foreach (string s in list)
@@ -198,7 +198,7 @@ namespace pinkspider
                 superlist.AddRange(GetLinksCore(s));
                 WriteStatics(s);
                 superlist.RemoveAt(0);
-                if (superlist.Count - t > 200)
+                if (superlist.Count - t > 500)
                 {
                     t = superlist.Count;
                     SaveBackground(superlist);
