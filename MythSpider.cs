@@ -6,46 +6,52 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 namespace pinkspider
 {
-	public class MythSpider
-	{
-		HttpWebRequest request;
-		private List<string> NameLists;
-		//private Dictionary<string,int> WebLists;
-		private List<string> BrowserLists;
-		public string GetStatics(string tagName)
-		{
+    public class MythSpider
+    {
+        HttpWebRequest request;
+        private List<string> NameLists;
+        //private Dictionary<string,int> WebLists;
+        private HashSet<string> BrowserLists;
+        public string GetStatics(string tagName)
+        {
 
-			try
-			{
+            try
+            {
                 StreamReader sr = GetRequestCount("http://index.iqiyi.com/q/?name=" + tagName);
                 if (sr == null)
                     return string.Empty;
 
-				string ret = string.Empty;
-				for(;;){
-					string t = sr.ReadLine();
-					if(t == null){
-						break;
-					}
-					//var videoIndexStat
-					if(t.Contains("var videoIndexStat")){
-						var sp = t.Split('=');
-						if(sp.Length > 1){
-							//Console.WriteLine(sp[1]);
-							ret = sp[1];
-							ret = ret.Replace(" ","");
-							ret = ret.Replace(";","");
-							break;
-						}
-					}
-				}
-				sr.Close();
-				return ret;
-			}catch{
-				Console.WriteLine ("Error on Tag:" + tagName);
-				return string.Empty;
-			}
-		}
+                string ret = string.Empty;
+                for (; ; )
+                {
+                    string t = sr.ReadLine();
+                    if (t == null)
+                    {
+                        break;
+                    }
+                    //var videoIndexStat
+                    if (t.Contains("var videoIndexStat"))
+                    {
+                        var sp = t.Split('=');
+                        if (sp.Length > 1)
+                        {
+                            //Console.WriteLine(sp[1]);
+                            ret = sp[1];
+                            ret = ret.Replace(" ", "");
+                            ret = ret.Replace(";", "");
+                            break;
+                        }
+                    }
+                }
+                sr.Close();
+                return ret;
+            }
+            catch
+            {
+                Console.WriteLine("Error on Tag:" + tagName);
+                return string.Empty;
+            }
+        }
 
         private string GetTitleCore(string src)
         {
@@ -62,61 +68,89 @@ namespace pinkspider
             }
             return ret;
         }
-		private StreamReader GetRequestCount(string html,int times = 10){
-			StreamReader sr = null;
-			for (int i = 0; i < times; i++) {
-				if (sr != null)
-					break;
-				try {
-					if(request != null){
-						request.Abort();
-						//request.GetResponse().Close();
-					}
-					request = (HttpWebRequest)HttpWebRequest.Create (html);    //创建一个请求示例
-					request.AllowAutoRedirect = true;
-					request.Timeout = 1000;
-					HttpWebResponse response = (HttpWebResponse)request.GetResponse ();//获取响应，即发送请求
-					var responseStream = response.GetResponseStream ();
-					sr = new StreamReader (responseStream, Encoding.UTF8);
-					//request.Abort();
-				} catch {
-					sr = null;
-					Console.WriteLine ("Reconnecting:" + html);
-				}
-			}
-			return sr;
-		}
-
-		private List<string> GetLinksCore(string html)
+        private StreamReader GetRequestCount(string html, int times = 5)
         {
-            List<string> links = new List<string>(); 
-			StreamReader sr = GetRequestCount (html);
+            StreamReader sr = null;
+            for (int i = 0; i < times; i++)
+            {
+                if (sr != null)
+                    break;
+                try
+                {
+                    if (request != null)
+                    {
+                        request.Abort();
+                        //request.GetResponse().Close();
+                    }
+                    request = (HttpWebRequest)HttpWebRequest.Create(html);    //创建一个请求示例
+                    request.AllowAutoRedirect = true;
+                    request.Timeout = 1000 / 2;
+                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();//获取响应，即发送请求
+                    var responseStream = response.GetResponseStream();
+                    sr = new StreamReader(responseStream, Encoding.UTF8);
+                    //request.Abort();
+                }
+                catch
+                {
+                    sr = null;
+                    //Console.WriteLine ("Reconnecting:" + html);
+                }
+            }
+            return sr;
+        }
+
+        private List<string> GetLinksCore(string html)
+        {
+            List<string> links = new List<string>();
+            StreamReader sr = GetRequestCount(html);
             if (sr == null)
+            {
+                Console.WriteLine("ReadFailed:" + html);
                 return links;
+            }
 
             const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?";
             string str = sr.ReadToEnd();
             WriteStatics(str);
-			Regex r = new Regex (pattern, RegexOptions.IgnoreCase); //新建正则模式
-			MatchCollection m = r.Matches (str); //获得匹配结果
+            Regex r = new Regex(pattern, RegexOptions.IgnoreCase); //新建正则模式
+            MatchCollection m = r.Matches(str); //获得匹配结果
 
-			for (int i = 0; i < m.Count; i++) {
-				string s = m [i].ToString ();
-				if(s.Contains(".html")){	//perhaps add ?list
+            for (int i = 0; i < m.Count; i++)
+            {
+                string s = m[i].ToString();
+                if (s.Contains(".html"))
+                {	//perhaps add ?list
                     if (!s.Contains("list.iqiyi"))
                     {
+                        //video_name
+                        var splits = Regex.Split(s, ".html");
+                        if (splits.Length > 0)
+                        {
+                            s = splits[0];
+                            s = s + ".html";
+                        }
                         if (!BrowserLists.Contains(s))
                         {
                             BrowserLists.Add(s);
                             links.Add(s); //提取出结果
                         }
                     }
-				}
-			}
-			sr.Close ();
-			return links;
-		}
-
+                }
+            }
+            sr.Close();
+            return links;
+        }
+        private void SaveBackground(List<string> list)
+        {
+            Console.WriteLine("Saving Background,{0},elements", BrowserLists.Count);
+            var t = DateTime.Now;
+            StreamWriter sw = new StreamWriter("history.log",false,Encoding.UTF8);
+            foreach (string s in list)
+            {
+                sw.WriteLine(s);
+            }
+            sw.Close();
+        }
         private void WriteStatics(string src)
         {
             string title = GetTitleCore(src);
@@ -147,10 +181,15 @@ namespace pinkspider
 
             }
         }
-		public void StartLoop(string html){
-			//string[] tmp = { html };
-            List<string> superlist = new List<string>();
-            superlist.Add(html);
+        public void StartLoop(string html)
+        {
+            string[] tmp = {html};
+            StartLoop(tmp);
+        }
+        public void StartLoop(string[] history)
+        {
+            int t = 0;
+            List<string> superlist = new List<string>(history);
             for (; ; )
             {
                 if (superlist.Count == 0)
@@ -159,15 +198,20 @@ namespace pinkspider
                 superlist.AddRange(GetLinksCore(s));
                 WriteStatics(s);
                 superlist.RemoveAt(0);
+                if (superlist.Count - t > 200)
+                {
+                    t = superlist.Count;
+                    SaveBackground(superlist);
+                }
             }
-		}
-		public MythSpider ()
-		{
-			request = null;
-			NameLists = new List<string> ();
-			//WebLists = new Dictionary<string, int> ();
-			BrowserLists = new List<string> ();
-		}
-	}
+        }
+        public MythSpider()
+        {
+            request = null;
+            NameLists = new List<string>();
+            //WebLists = new Dictionary<string, int> ();
+            BrowserLists = new HashSet<string>();
+        }
+    }
 }
 
