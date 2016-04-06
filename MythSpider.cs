@@ -9,7 +9,6 @@ namespace pinkspider
     public class MythSpider
     {
         private HttpWebRequest request;
-        private HashSet<string> NameLists;
         private List<string> superlist;
         private int mindex;
         public string GetStatics(string tagName)
@@ -222,7 +221,6 @@ namespace pinkspider
         public MythSpider()
         {
             request = null;
-            NameLists = new HashSet<string>();
         }
     }
 }
