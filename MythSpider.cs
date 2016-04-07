@@ -8,8 +8,7 @@ namespace pinkspider
 {
     public class MythSpider
     {
-        private HttpWebRequest request;
-        private List<string> superlist;
+        private Queue<string> superlist;
         private int mindex;
         public string GetStatics(string tagName)
         {
@@ -55,9 +54,9 @@ namespace pinkspider
             }
         }
 
-        public List<string> GetList()
+        public string[] GetList()
         {
-            return superlist;
+            return superlist.ToArray(); ;
         }
 
         private string GetTitleCore(string src)
@@ -102,23 +101,23 @@ namespace pinkspider
             }
             return false;
         }
-        private List<string> GetLinksCore(string html)
+        private void GetLinksCore(string html)
         {
-            List<string> links = new List<string>();
-            if (Global.Contains(html))
-            {
-                return links;
-            }
+            //List<string> links = new List<string>();
+           // if (Global.Contains(html))
+            //{
+            //    return links;
+            //}
             try
             {
-                Global.Add(html);
+                //Global.Add(html);
                 MythRequestHelper requesthelper = new MythRequestHelper(html);
                 requesthelper.Connect();
                 StreamReader sr = requesthelper.GetStream();
                 if (sr == null)
                 {
                     Console.WriteLine("thread {0}:ReadFailed,{1}" ,mindex,html);
-                    return links;
+                    return;
                 }
 
                 const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*.html)";
@@ -132,7 +131,11 @@ namespace pinkspider
                         string s = match.ToString();
                         if (!s.Contains("list.iqiyi"))
                         {
-                            links.Add(s); //提取出结果
+                            if (!Global.Contains(s))
+                            {
+                                Global.Add(s);
+                                superlist.Enqueue(s); //提取出结果
+                            }
                         }
                     }
                     requesthelper.Close();
@@ -142,7 +145,7 @@ namespace pinkspider
             {
                 Console.WriteLine("thread {0}:{1},{2}", mindex, ee.Message,html);
             }
-            return links;
+            return;
         }
 
         private void SaveBackground(List<string> list)
@@ -184,6 +187,7 @@ namespace pinkspider
                         }
                         else
                         {
+                            Console.WriteLine("thread {0}:Ignore,{1}", mindex, realtitle);
                             return false;
                         }
                     }
@@ -211,19 +215,17 @@ namespace pinkspider
         public void StartLoop(string[] history,int index)
         {
             mindex = index;
-            superlist = new List<string>(history);
+            superlist = new Queue<string>(history);
             for (; ; )
             {
                 if (superlist.Count == 0)
                     break;
-                var s = superlist[0];
-                superlist.AddRange(GetLinksCore(s));
-                superlist.RemoveAt(0);
+                var s = superlist.Dequeue();
+                GetLinksCore(s);
             }
         }
         public MythSpider()
         {
-            request = null;
         }
     }
 }

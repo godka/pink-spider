@@ -3,7 +3,7 @@ namespace pinkspider
 {
 	class MainClass
 	{
-        public const int threadnum = 1;
+        public const int threadnum = 4;
         public static void Main(string[] args)
         {
             MythSpiderPool spider;// = new MythSpiderPool();
@@ -15,7 +15,7 @@ namespace pinkspider
             }
             else
             {
-                spider = new MythSpiderPool("http://www.iqiyi.com", threadnum);
+                spider = new MythSpiderPool("http://www.iqiyi.com/v_19rrkz8rv8.html", threadnum);
             }
             spider.StartLoop();
         }
