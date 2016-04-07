@@ -16,7 +16,10 @@ namespace pinkspider
 
             try
             {
-                StreamReader sr = GetRequestCount("http://index.iqiyi.com/q/?name=" + tagName);
+
+                MythRequestHelper requesthelper = new MythRequestHelper("http://index.iqiyi.com/q/?name=" + tagName);
+                requesthelper.Connect();
+                StreamReader sr = requesthelper.GetStream();
                 if (sr == null)
                     return string.Empty;
 
@@ -42,7 +45,7 @@ namespace pinkspider
                         }
                     }
                 }
-                sr.Close();
+                requesthelper.Close();
                 return ret;
             }
             catch
@@ -60,94 +63,84 @@ namespace pinkspider
         private string GetTitleCore(string src)
         {
             string ret = string.Empty;
-
+            /*
             const string pattern = @"(?<=title\>).*(?=</title)";
             Regex r = new Regex(pattern, RegexOptions.IgnoreCase); //新建正则模式
             MatchCollection m = r.Matches(src); //获得匹配结果
-            if (m.Count > 0)
+            foreach(Match match in m)
             {
-                ret = m[0].ToString();
+                ret = match.ToString();
                 ret = ret.Replace("<title>", "");
                 ret = ret.Replace("</title>", "");
             }
-            return ret;
-        }
-        private StreamReader GetRequestCount(string html, int times = 5)
-        {
-            StreamReader sr = null;
-            for (int i = 0; i < times; i++)
+             */
+            if (src.Contains("<title>"))
             {
-                if (sr != null)
+                ret = src.Replace("<title>", "");
+                ret = ret.Replace("</title>", "");
+            }
+            return ret.Trim();
+        }
+        private bool ReadTitle(StreamReader sr)
+        {
+
+            for (; ; )
+            {
+                string str = sr.ReadLine();
+                if (str == null)
                     break;
-                try
+                else
                 {
-                    if (request != null)
+                    string title = GetTitleCore(str);
+                    if (!title.Equals(string.Empty))
                     {
-                        request.Abort();
-                        //request.GetResponse().Close();
+                        WriteStatics(title);
+                        return true;
                     }
-                    request = (HttpWebRequest)HttpWebRequest.Create(html);    //创建一个请求示例
-                    request.AllowAutoRedirect = true;
-                    request.Timeout = 1000 / 2;
-                    HttpWebResponse response = (HttpWebResponse)request.GetResponse();//获取响应，即发送请求
-                    var responseStream = response.GetResponseStream();
-                    sr = new StreamReader(responseStream, Encoding.UTF8);
-                    //request.Abort();
-                }
-                catch
-                {
-                    sr = null;
-                    //Console.WriteLine ("Reconnecting:" + html);
+
                 }
             }
-            return sr;
+            return false;
         }
-
         private List<string> GetLinksCore(string html)
         {
             List<string> links = new List<string>();
+            if (Global.Contains(html))
+            {
+                return links;
+            }
             try
             {
-                StreamReader sr = GetRequestCount(html);
+                Global.Add(html);
+                MythRequestHelper requesthelper = new MythRequestHelper(html);
+                requesthelper.Connect();
+                StreamReader sr = requesthelper.GetStream();
                 if (sr == null)
                 {
                     Console.WriteLine("thread {0}:ReadFailed,{1}" ,mindex,html);
                     return links;
                 }
 
-                const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?";
-                string str = sr.ReadToEnd();
-                WriteStatics(str);
-                Regex r = new Regex(pattern, RegexOptions.IgnoreCase); //新建正则模式
-                MatchCollection m = r.Matches(str); //获得匹配结果
-
-                for (int i = 0; i < m.Count; i++)
+                const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*.html)";
+                if (ReadTitle(sr))
                 {
-                    string s = m[i].ToString();
-                    if (s.Contains(".html"))
-                    {	//perhaps add ?list
+                    string str = sr.ReadToEnd();
+                    Regex r = new Regex(pattern, RegexOptions.IgnoreCase); //新建正则模式
+                    MatchCollection m = r.Matches(str); //获得匹配结果
+                    foreach (Match match in m)
+                    {
+                        string s = match.ToString();
                         if (!s.Contains("list.iqiyi"))
                         {
-                            //video_name
-                            var splits = Regex.Split(s, ".html");
-                            if (splits.Length > 0)
-                            {
-                                s = splits[0];
-                                s = s + ".html";
-                            }
-                            if (!Global.BrowserLists.Contains(s))
-                            {
-                                Global.BrowserLists.Add(s);
-                                links.Add(s); //提取出结果
-                            }
+                            links.Add(s); //提取出结果
                         }
                     }
+                    requesthelper.Close();
                 }
-                sr.Close();
             }
             catch (Exception ee)
             {
-                Console.WriteLine("thread {0}:{1}", mindex, ee.Message);
+                Console.WriteLine("thread {0}:{1},{2}", mindex, ee.Message,html);
             }
             return links;
         }
@@ -163,9 +156,9 @@ namespace pinkspider
             }
             sw.Close();
         }
-        private void WriteStatics(string src)
+        private bool WriteStatics(string title)
         {
-            string title = GetTitleCore(src);
+            //string title = GetTitleCore(src);
             if (!title.Equals(string.Empty))
             {
                 var realtitles = title.Split('-');
@@ -175,9 +168,9 @@ namespace pinkspider
                     var sptitle = Regex.Split(realtitle, "&nbsp");
                     if (sptitle.Length > 0)
                         realtitle = sptitle[0];
-                    if (!Global.NameLists.Contains(realtitle))
+                    if (!Global.Contains(realtitle))
                     {
-                        Global.NameLists.Add(realtitle);
+                        Global.Add(realtitle);
                         string ret = GetStatics(realtitle);
                         if (!ret.Equals(string.Empty))
                         {
@@ -187,9 +180,26 @@ namespace pinkspider
                             sw.WriteLine(ret);
                             sw.Close();
                             fs.Close();
+                            return true;
+                        }
+                        else
+                        {
+                            return false;
                         }
                     }
+                    else
+                    {
+                        return false;
+                    }
                 }
+                else
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
 
             }
         }
@@ -202,20 +212,13 @@ namespace pinkspider
         {
             mindex = index;
             superlist = new List<string>(history);
-            //int t = superlist.Count;
             for (; ; )
             {
                 if (superlist.Count == 0)
                     break;
                 var s = superlist[0];
                 superlist.AddRange(GetLinksCore(s));
-                WriteStatics(s);
                 superlist.RemoveAt(0);
-                //if (superlist.Count - t > 500)
-                //{
-                //    t = superlist.Count;
-                //    SaveBackground(superlist);
-                //}
             }
         }
         public MythSpider()

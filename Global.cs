@@ -6,7 +6,15 @@ namespace pinkspider
 {
     public static class Global
     {
-        public static List<string> BrowserLists = new List<string>();
-        public static List<string> NameLists = new List<string>();
+        private static HashSet<string> BrowserLists = new HashSet<string>();
+        //public static HashSet<string> NameLists = new HashSet<string>();
+        public static bool Contains(string item)
+        {
+            return BrowserLists.Contains(item);
+        }
+        public static void Add(string item)
+        {
+            BrowserLists.Add(item);
+        }
     }
 }
