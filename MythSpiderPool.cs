@@ -10,7 +10,6 @@ namespace pinkspider
     public class MythSpiderPool
     {
         private Timer mtimer;
-        private HttpWebRequest request;
         private List<MythSpider> mspider;
         private int mthreadnum;
         private string[] mstrs;
@@ -33,6 +32,8 @@ namespace pinkspider
             {
                 alllist.AddRange(spider.GetList());
             }
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
             Console.WriteLine("Saving Background,{0} elements", alllist.Count);
             StreamWriter sw = new StreamWriter("history.log", false, Encoding.UTF8);
             foreach (string s in alllist)
@@ -40,11 +41,12 @@ namespace pinkspider
                 sw.WriteLine(s);
             }
             sw.Close();
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
             Console.WriteLine("Saving Background,Done");
         }
         private void MythSpiderPoolCore(string[] history, int threadnum)
         {
-            request = null;
             mstrs = history;
             mthreadnum = threadnum;
             mspider = new List<MythSpider>();

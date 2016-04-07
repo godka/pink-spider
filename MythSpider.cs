@@ -49,6 +49,7 @@ namespace pinkspider
             }
             catch
             {
+                Console.ForegroundColor = ConsoleColor.Red;
                 Console.WriteLine("Error on Tag:" + tagName);
                 return string.Empty;
             }
@@ -116,6 +117,7 @@ namespace pinkspider
                 StreamReader sr = requesthelper.GetStream();
                 if (sr == null)
                 {
+                    Console.ForegroundColor = ConsoleColor.DarkRed;
                     Console.WriteLine("thread {0}:ReadFailed,{1}" ,mindex,html);
                     return;
                 }
@@ -143,6 +145,7 @@ namespace pinkspider
             }
             catch (Exception ee)
             {
+                Console.ForegroundColor = ConsoleColor.DarkRed;
                 Console.WriteLine("thread {0}:{1},{2}", mindex, ee.Message,html);
             }
             return;
@@ -150,6 +153,7 @@ namespace pinkspider
 
         private void SaveBackground(List<string> list)
         {
+            Console.ForegroundColor = ConsoleColor.Black;
             Console.WriteLine("Saving Background,{0},elements", list.Count);
             var t = DateTime.Now;
             StreamWriter sw = new StreamWriter("history.log",false,Encoding.UTF8);
@@ -177,6 +181,7 @@ namespace pinkspider
                         string ret = GetStatics(realtitle);
                         if (!ret.Equals(string.Empty))
                         {
+                            Console.ForegroundColor = ConsoleColor.DarkGreen;
                             Console.WriteLine("thread {0}:hit,{1}",mindex,realtitle);
                             FileStream fs = new FileStream("out.txt", FileMode.Append);
                             StreamWriter sw = new StreamWriter(fs);
@@ -187,6 +192,7 @@ namespace pinkspider
                         }
                         else
                         {
+                            Console.ForegroundColor = ConsoleColor.DarkMagenta;
                             Console.WriteLine("thread {0}:Ignore,{1}", mindex, realtitle);
                             return false;
                         }

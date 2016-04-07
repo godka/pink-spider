@@ -6,6 +6,8 @@ namespace pinkspider
         public const int threadnum = 4;
         public static void Main(string[] args)
         {
+            Console.BackgroundColor = ConsoleColor.White;
+            Console.ForegroundColor = ConsoleColor.Black;
             MythSpiderPool spider;// = new MythSpiderPool();
             if (args.Length > 0)
             {
