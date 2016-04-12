@@ -8,6 +8,7 @@ namespace pinkspider
         {
             Console.BackgroundColor = ConsoleColor.White;
             Console.ForegroundColor = ConsoleColor.Black;
+            Console.Clear();
             MythSpiderPool spider;// = new MythSpiderPool();
             if (args.Length > 0)
             {

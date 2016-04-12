@@ -10,6 +10,10 @@ namespace pinkspider
     {
         private Queue<string> superlist;
         private int mindex;
+        public int len()
+        {
+            return superlist.Count;
+        }
         public string GetStatics(string tagName)
         {
 
@@ -109,6 +113,8 @@ namespace pinkspider
             //{
             //    return links;
             //}
+            if (!html.Contains("www.iqiyi.com"))
+                return;
             try
             {
                 //Global.Add(html);
@@ -122,22 +128,18 @@ namespace pinkspider
                     return;
                 }
 
-                const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*.html)";
                 if (ReadTitle(sr))
                 {
                     string str = sr.ReadToEnd();
-                    Regex r = new Regex(pattern, RegexOptions.IgnoreCase); //新建正则模式
+                    Regex r = new Regex(@"http://www.iqiyi.com/(.*).html", RegexOptions.IgnoreCase); //新建正则模式
                     MatchCollection m = r.Matches(str); //获得匹配结果
                     foreach (Match match in m)
                     {
                         string s = match.ToString();
-                        if (!s.Contains("list.iqiyi"))
+                        if (!Global.Contains(s))
                         {
-                            if (!Global.Contains(s))
-                            {
-                                Global.Add(s);
-                                superlist.Enqueue(s); //提取出结果
-                            }
+                            Global.Add(s);
+                            superlist.Enqueue(s); //提取出结果
                         }
                     }
                     requesthelper.Close();

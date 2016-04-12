@@ -25,26 +25,25 @@ namespace pinkspider
             }
             mspider[index].StartLoop(tmpstr.ToArray(), index);
         }
+
         private void timer_Callback(object sender)
         {
-            List<string> alllist = new List<string>();
+            long allistlen = 0;
             foreach (MythSpider spider in mspider)
-            {
-                alllist.AddRange(spider.GetList());
-            }
+                allistlen += spider.len();
             Console.BackgroundColor = ConsoleColor.White;
             Console.ForegroundColor = ConsoleColor.Black;
-            Console.WriteLine("Saving Background,{0} elements", alllist.Count);
+            Console.WriteLine("Saving Background,{0} elements", allistlen);
             StreamWriter sw = new StreamWriter("history.log", false, Encoding.UTF8);
-            foreach (string s in alllist)
-            {
-                sw.WriteLine(s);
-            }
+            foreach (MythSpider spider in mspider)
+                foreach (string s in spider.GetList())
+                    sw.WriteLine(s);
             sw.Close();
             Console.BackgroundColor = ConsoleColor.White;
             Console.ForegroundColor = ConsoleColor.Black;
             Console.WriteLine("Saving Background,Done");
         }
+
         private void MythSpiderPoolCore(string[] history, int threadnum)
         {
             mstrs = history;
@@ -87,7 +86,7 @@ namespace pinkspider
                     return links;
                 }
 
-                const string pattern = @"http://([\w-]+\.)+[\w-]+(/[\w- ./?%&=]*)?";
+                const string pattern = @"http://www.iqiyi.com/(.*).html";
                 string str = sr.ReadToEnd();
                 Regex r = new Regex(pattern, RegexOptions.IgnoreCase); //新建正则模式
                 MatchCollection m = r.Matches(str); //获得匹配结果
